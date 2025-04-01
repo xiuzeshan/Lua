@@ -122,7 +122,7 @@ local function main()
         {name = "ArcanaBlade", url = "https://files.catbox.moe/ono62b.lua"},
         {name = "ZombieHunterOffline", url = "https://files.catbox.moe/wodtan.lua"},
         {name = "NFSNoLimits", url = "https://files.catbox.moe/rfag5t.lua"},
-        {name = "DragonBUURRP", url = "https://files.catbox.moe/4yzbcj.lua"},
+        {name = "DragonBUURRP!", url = "https://files.catbox.moe/4yzbcj.lua"},
         {name = "GrimSoul", url = "https://files.catbox.moe/cbei7d.lua"},
         {name = "ARKMobile", url = "https://files.catbox.moe/9uhyqn.lua"},
         {name = "FClassAdventurer", url = "https://files.catbox.moe/fk37j3.lua"},
