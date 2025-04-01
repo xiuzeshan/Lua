@@ -1,15 +1,208 @@
-local files = {
-    {name = "SubwaySurfers", url = "https://files.catbox.moe/ur41lo.lua"},
-    {name = "Beatstar", url = "https://files.catbox.moe/j4wszr.lua"}
-}
-
-local choices = {}
-for i, file in ipairs(files) do
-    table.insert(choices, file.name)
+local function trim(s)
+    return s:gsub("^%s+", ""):gsub("%s+$", "")
 end
 
--- Add "Download All" option as the last item
-table.insert(choices, "Download All")
+local function autoUpdate()
+    local pastebinUrl = "https://pastebin.com/raw/95YpWxuW"
+    local currentScriptPath = gg.getFile()
+    
+    gg.toast("Checking for updates...", false)
+    local response = gg.makeRequest(pastebinUrl)
+    if not response or not response.content then
+        return false
+    end
+    
+    local function normalize(content)
+        content = content:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("%s+", " ")
+        return trim(content)
+    end
+    
+    local currentFile = io.open(currentScriptPath, "r")
+    if currentFile then
+        local currentContent = currentFile:read("*a")
+        currentFile:close()
+        
+        if normalize(currentContent) == normalize(response.content) then
+            return false
+        end
+    end
+    
+    local time = os.date("*t")
+    local newFilename = currentScriptPath:gsub(".lua$", "") .. 
+                       string.format(" %02d%02d%04d.lua",
+                       time.day, time.month, time.year)
+    
+    local newFile = io.open(newFilename, "w")
+    if not newFile then
+        gg.toast("Failed to save update", false)
+        return false
+    end
+    
+    newFile:write(response.content)
+    newFile:close()
+    
+    local verifyFile = io.open(newFilename, "r")
+    if not verifyFile then
+        os.remove(newFilename)
+        return false
+    end
+    
+    local verifiedContent = verifyFile:read("*a")
+    verifyFile:close()
+    
+    if normalize(verifiedContent) == normalize(response.content) then
+        gg.alert("✅ Update successful!\n\nNew script saved as:\n"..
+                newFilename.."\n\nPlease run the new file.")
+        os.exit()
+        return true
+    else
+        os.remove(newFilename)
+        return false
+    end
+end
 
--- Show the multiChoice dialog with English text
-local selected = gg.multiChoice(choices, nil, "Select the script(s) you want to download:")
+local function downloadScript(url, filename)
+    gg.toast("Downloading "..filename.."...", false)
+    
+    local script_path = gg.getFile():match("(.+/)") or ""
+    local file_path = script_path .. filename .. "_XIU.lua"
+    
+    local response = gg.makeRequest(url)
+    
+    if not response then
+        return false, "No response from server", file_path
+    elseif response.code and response.code ~= 200 then
+        return false, "HTTP Error: "..(response.code or "unknown"), file_path
+    elseif not response.content or #response.content == 0 then
+        return false, "Empty content received", file_path
+    end
+    
+    local f = io.open(file_path, "w")
+    if not f then
+        return false, "Failed to create file", file_path
+    end
+    
+    f:write(response.content)
+    f:close()
+    
+    local verify = io.open(file_path, "r")
+    if not verify then
+        os.remove(file_path)
+        return false, "Verification failed", file_path
+    end
+    
+    local content = verify:read("*a")
+    verify:close()
+    
+    if #content ~= #response.content then
+        os.remove(file_path)
+        return false, "File corrupted during download", file_path
+    end
+    
+    return true, file_path, file_path
+end
+
+local function sortScripts(a, b)
+    return a.name:upper() < b.name:upper()
+end
+
+local function main()
+    local files = {
+        {name = "SubwaySurfers", url = "https://files.catbox.moe/ur41lo.lua"},
+        {name = "Beatstar", url = "https://files.catbox.moe/j4wszr.lua"},
+        {name = "ShadowKnight", url = "https://files.catbox.moe/6pqzef.lua"},
+        {name = "BoxHead", url = "https://files.catbox.moe/ikmynv.lua"},
+        {name = "Swordash", url = "https://files.catbox.moe/t64vwq.lua"},
+        {name = "PixelHunterIdle", url = "https://files.catbox.moe/nccn8b.lua"},
+        {name = "Evertale", url = "https://files.catbox.moe/kioorz.lua"},
+        {name = "EarnToDieRogue", url = "https://files.catbox.moe/cs0jbu.lua"},
+        {name = "PvZFusion", url = "https://files.catbox.moe/bfrlqg.lua"},
+        {name = "GuardianTales", url = "https://files.catbox.moe/1kagtl.lua"},
+        {name = "TheDemonized", url = "https://files.catbox.moe/k8j09a.lua"},
+        {name = "ArcanaBlade", url = "https://files.catbox.moe/ono62b.lua"},
+        {name = "ZombieHunterOffline", url = "https://files.catbox.moe/wodtan.lua"},
+        {name = "NFSNoLimits", url = "https://files.catbox.moe/rfag5t.lua"},
+        {name = "DragonBUURRP", url = "https://files.catbox.moe/4yzbcj.lua"},
+        {name = "GrimSoul", url = "https://files.catbox.moe/cbei7d.lua"},
+        {name = "ARKMobile", url = "https://files.catbox.moe/9uhyqn.lua"},
+        {name = "FClassAdventurer", url = "https://files.catbox.moe/fk37j3.lua"},
+        {name = "SpaceShooter", url = "https://files.catbox.moe/g78861.lua"},
+        {name = "PicklePete", url = "https://files.catbox.moe/hrgq4a.lua"},
+        {name = "DBLegends", url = "https://files.catbox.moe/eh7iny.lua"},
+        {name = "SquadAngels", url = "https://files.catbox.moe/b8kpuc.lua"},
+        {name = "JurassicWorldTheGame", url = "https://files.catbox.moe/3uq20s.lua"},
+        {name = "EtherealHunter", url = "https://files.catbox.moe/sc16mb.lua"},
+        {name = "CyberFighters", url = "https://files.catbox.moe/iqnqa6.lua"}
+    }
+
+    table.sort(files, sortScripts)
+
+    local choices = {}
+    for i, file in ipairs(files) do
+        table.insert(choices, file.name)
+    end
+    table.insert(choices, "Download All")
+
+    local selected = gg.multiChoice(choices, nil, "Select script(s) to download (A-Z sorted):")
+    
+    if not selected then
+        gg.alert("No scripts selected!")
+        return
+    end
+    
+    local downloaded = {}
+    local failed = {}
+    local download_locations = {}
+
+
+    if selected[#choices] then
+        for i, file in ipairs(files) do
+            local success, result, path = downloadScript(file.url, file.name)
+            if success then
+                table.insert(downloaded, file.name)
+                download_locations[file.name] = path
+            else
+                table.insert(failed, file.name.." ("..result..")")
+            end
+        end
+    else
+
+        for i = 1, #choices - 1 do
+            if selected[i] then
+                local file = files[i]
+                local success, result, path = downloadScript(file.url, file.name)
+                if success then
+                    table.insert(downloaded, file.name)
+                    download_locations[file.name] = path
+                else
+                    table.insert(failed, file.name.." ("..result..")")
+                end
+            end
+        end
+    end
+    
+    local location_info = "\n\n📁 Download Locations:\n"
+    for name, path in pairs(download_locations) do
+        location_info = location_info .. "\n" .. name .. ":\n" .. path .. "\n"
+    end
+    
+    local message = ""
+    if #downloaded > 0 then
+        message = "✅ Downloaded successfully:\n" .. table.concat(downloaded, "\n")
+        message = message .. location_info
+    end
+    if #failed > 0 then
+        if message ~= "" then message = message .. "\n\n" end
+        message = message .. "❌ Failed to download:\n" .. table.concat(failed, "\n")
+    end
+    
+    if message ~= "" then
+        gg.alert(message)
+    else
+        gg.alert("No scripts were downloaded!")
+    end
+end
+
+if not autoUpdate() then
+    main()
+end
