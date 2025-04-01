@@ -3,11 +3,11 @@ local function trim(s)
 end
 
 local function autoUpdate()
-    local pastebinUrl = "https://pastebin.com/raw/95YpWxuW"
+    local githubUrl = "https://raw.githubusercontent.com/xiuzeshan/Lua/refs/heads/main/Script%20Downloader"
     local currentScriptPath = gg.getFile()
     
     gg.toast("Checking for updates...", false)
-    local response = gg.makeRequest(pastebinUrl)
+    local response = gg.makeRequest(githubUrl)
     if not response or not response.content then
         return false
     end
